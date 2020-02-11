@@ -1,0 +1,48 @@
+<dashboard script="table_data_bar_pad.js">
+  <label>Boomerang Resource Timings Example</label>
+  <row>
+    <panel depends="$alwaysHideCSSPanel$">
+      <html>
+        <style>#waterfallTable th[data-sort-key=Waterfall] { width: 40% !important; }</style>
+      </html>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table id="waterfallTable">
+        <search>
+          <query>| inputlookup boomerang_data.csv
+
+| eval startTime=tonumber(startTime,36), responseEnd=tonumber(responseEnd,36)
+| replace 0 with other 1 with img 2 with link 3 with script 4 with css 5 with xmlhttprequest 6 with html 7 with image 8 with beacon 9 with fetch a with iframe a with subdocument in initiatorType
+| sort startTime
+
+| eval end=startTime+responseEnd
+| eventstats max(end) as maxend
+
+| eval
+timeTakenMs=responseEnd,
+Waterfall=round(startTime/maxend*100, 2)."|".round(timeTakenMs/maxend*100, 2)."|".case(timeTakenMs&gt;1000, "#FF0000", timeTakenMs&gt;500, "#FFFF00", true(), "#008000"),
+"Time Spent (sec)"=timeTakenMs/1000,
+"Start Time (sec)"=startTime/1000
+
+| where isnotnull(Waterfall)
+| rename url as BeaconKey
+
+| table "BeaconKey","initiatorType","Start Time (sec)","Time Spent (sec)", "Waterfall"</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+</dashboard>
